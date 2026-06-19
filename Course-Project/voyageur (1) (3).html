@@ -1,0 +1,2040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Voyageur — Guest Itinerary Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #C9A96E;
+    --gold-light: #E8D5B0;
+    --gold-dark: #8B6A35;
+    --ink: #1A1612;
+    --ink-soft: #2E2820;
+    --cream: #FAF7F2;
+    --cream-mid: #F0EBE1;
+    --cream-dark: #DDD4C4;
+    --text-muted: #7A6E60;
+    --text-mid: #4A4238;
+    --white: #FFFFFF;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 5vw;
+    height: 72px;
+    background: rgba(250, 247, 242, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid var(--cream-dark);
+  }
+
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 1.6rem;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); font-style: italic; }
+
+  .nav-links {
+    display: flex; gap: 2.5rem; list-style: none;
+  }
+  .nav-links a {
+    font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-mid); text-decoration: none; font-weight: 400;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--gold-dark); }
+
+  .nav-cta {
+    display: flex; gap: 1rem; align-items: center;
+  }
+  .btn-ghost {
+    font-family: var(--sans); font-size: 0.78rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-mid); background: none;
+    border: none; cursor: pointer; padding: 8px 0; transition: color 0.2s;
+  }
+  .btn-ghost:hover { color: var(--gold-dark); }
+
+  .btn-primary {
+    font-family: var(--sans); font-size: 0.78rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--cream); background: var(--ink);
+    border: none; cursor: pointer; padding: 10px 22px;
+    border-radius: 2px; transition: background 0.2s;
+  }
+  .btn-primary:hover { background: var(--gold-dark); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 72px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-left {
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 6vw 5vw 6vw 7vw;
+    position: relative; z-index: 2;
+  }
+
+  .hero-eyebrow {
+    display: flex; align-items: center; gap: 12px;
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold-dark); font-weight: 400; margin-bottom: 2rem;
+  }
+  .hero-eyebrow::before {
+    content: ''; display: block;
+    width: 40px; height: 0.5px; background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: var(--serif); font-weight: 300;
+    font-size: clamp(3rem, 5.5vw, 5.5rem);
+    line-height: 1.08;
+    color: var(--ink); margin-bottom: 1.8rem;
+  }
+  .hero-title em { font-style: italic; color: var(--gold-dark); }
+
+  .hero-subtitle {
+    font-size: 1rem; color: var(--text-muted); line-height: 1.75;
+    max-width: 420px; margin-bottom: 3rem; font-weight: 300;
+  }
+
+  .hero-actions {
+    display: flex; gap: 1.5rem; align-items: center;
+  }
+
+  .btn-hero {
+    font-family: var(--sans); font-size: 0.8rem; letter-spacing: 0.12em;
+    text-transform: uppercase; cursor: pointer; transition: all 0.25s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-hero-fill {
+    background: var(--ink); color: var(--cream);
+    padding: 14px 32px; border-radius: 2px; border: 1.5px solid var(--ink);
+  }
+  .btn-hero-fill:hover { background: var(--gold-dark); border-color: var(--gold-dark); }
+
+  .btn-hero-outline {
+    background: none; color: var(--ink);
+    padding: 14px 32px; border-radius: 2px; border: 1.5px solid var(--cream-dark);
+  }
+  .btn-hero-outline:hover { border-color: var(--ink); }
+
+  .hero-stat-strip {
+    display: flex; gap: 2.5rem; margin-top: 4rem;
+    padding-top: 2.5rem; border-top: 0.5px solid var(--cream-dark);
+  }
+  .stat-item {}
+  .stat-num {
+    font-family: var(--serif); font-size: 2rem; font-weight: 300;
+    color: var(--ink); display: block;
+  }
+  .stat-label {
+    font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted); display: block; margin-top: 2px;
+  }
+
+  .hero-right {
+    position: relative; overflow: hidden; background: var(--ink-soft);
+  }
+
+  .hero-map-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 40%, rgba(201,169,110,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 75% 70%, rgba(201,169,110,0.06) 0%, transparent 50%),
+      var(--ink-soft);
+  }
+
+  .map-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(201,169,110,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,169,110,0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .hero-card-float {
+    position: absolute;
+    background: rgba(250, 247, 242, 0.96);
+    border-radius: 4px;
+    padding: 1.2rem 1.5rem;
+    border: 0.5px solid var(--cream-dark);
+    animation: float-card 6s ease-in-out infinite;
+  }
+
+  .card-itinerary {
+    top: 18%; left: 8%; width: 240px;
+    animation-delay: 0s;
+  }
+  .card-weather {
+    bottom: 28%; right: 6%; width: 180px;
+    animation-delay: 2s;
+  }
+  .card-transport {
+    top: 55%; left: 14%; width: 200px;
+    animation-delay: 3.5s;
+  }
+
+  @keyframes float-card {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-12px); }
+  }
+
+  .card-label {
+    font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold-dark); margin-bottom: 0.6rem; font-weight: 500;
+  }
+  .card-title {
+    font-family: var(--serif); font-size: 1.1rem; font-weight: 400;
+    color: var(--ink); margin-bottom: 0.3rem;
+  }
+  .card-sub { font-size: 0.78rem; color: var(--text-muted); }
+
+  .card-steps {
+    display: flex; flex-direction: column; gap: 8px; margin-top: 0.8rem;
+  }
+  .step-row {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.78rem; color: var(--text-mid);
+  }
+  .step-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); flex-shrink: 0;
+  }
+  .step-time { color: var(--text-muted); font-size: 0.72rem; min-width: 36px; }
+
+  .card-transport-row {
+    display: flex; align-items: center; gap: 10px; margin-top: 0.8rem;
+  }
+  .transport-icon {
+    width: 32px; height: 32px; background: var(--ink);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .transport-icon svg { width: 14px; height: 14px; fill: var(--cream); }
+  .transport-info { flex: 1; }
+  .transport-label { font-size: 0.72rem; color: var(--text-muted); }
+  .transport-detail { font-size: 0.82rem; color: var(--ink); font-weight: 500; }
+
+  .weather-temp {
+    font-family: var(--serif); font-size: 2.5rem; font-weight: 300;
+    color: var(--ink); line-height: 1;
+  }
+  .weather-cond { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+
+  /* PIN MARKERS */
+  .map-pin {
+    position: absolute; display: flex; flex-direction: column; align-items: center;
+    cursor: pointer;
+  }
+  .pin-circle {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--gold); border: 2px solid var(--cream);
+    box-shadow: 0 0 0 3px rgba(201,169,110,0.3);
+    animation: pulse-pin 2s ease-in-out infinite;
+  }
+  .pin-line { width: 1px; height: 20px; background: var(--gold); opacity: 0.5; }
+
+  @keyframes pulse-pin {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(201,169,110,0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(201,169,110,0.1); }
+  }
+
+  .pin-a { top: 32%; left: 55%; }
+  .pin-b { top: 48%; left: 68%; }
+  .pin-c { top: 65%; left: 45%; }
+
+  .connector-line {
+    position: absolute;
+    background: none;
+    pointer-events: none;
+  }
+
+  /* FEATURES SECTION */
+  .features {
+    padding: 8rem 7vw 6rem;
+    background: var(--cream);
+  }
+
+  .section-header {
+    display: flex; align-items: flex-start; gap: 4rem;
+    margin-bottom: 5rem;
+  }
+  .section-eyebrow {
+    font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold-dark); display: flex; align-items: center; gap: 10px;
+    white-space: nowrap; padding-top: 0.4rem;
+  }
+  .section-eyebrow::before {
+    content: ''; width: 30px; height: 0.5px; background: var(--gold); display: block;
+  }
+  .section-title {
+    font-family: var(--serif); font-weight: 300;
+    font-size: clamp(2rem, 3.5vw, 3rem); line-height: 1.15;
+    color: var(--ink); flex: 1;
+  }
+  .section-title em { font-style: italic; color: var(--gold-dark); }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 0.5px solid var(--cream-dark);
+    border-left: 0.5px solid var(--cream-dark);
+  }
+
+  .feature-cell {
+    padding: 2.5rem 2rem;
+    border-right: 0.5px solid var(--cream-dark);
+    border-bottom: 0.5px solid var(--cream-dark);
+    transition: background 0.3s;
+    cursor: default;
+    position: relative; overflow: hidden;
+  }
+  .feature-cell::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(201,169,110,0.04), transparent);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .feature-cell:hover::after { opacity: 1; }
+  .feature-cell:hover { background: rgba(201,169,110,0.04); }
+
+  .feature-num {
+    font-family: var(--serif); font-size: 0.85rem; color: var(--gold);
+    margin-bottom: 1.2rem; font-style: italic;
+  }
+
+  .feature-icon {
+    width: 40px; height: 40px;
+    background: var(--ink);
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.4rem;
+  }
+  .feature-icon svg {
+    width: 18px; height: 18px; stroke: var(--gold); fill: none;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .feature-name {
+    font-family: var(--serif); font-size: 1.2rem; font-weight: 400;
+    color: var(--ink); margin-bottom: 0.6rem;
+  }
+  .feature-desc {
+    font-size: 0.85rem; color: var(--text-muted);
+    line-height: 1.7; font-weight: 300;
+  }
+
+  /* HOW IT WORKS */
+  .how {
+    padding: 7rem 7vw;
+    background: var(--ink);
+    position: relative; overflow: hidden;
+  }
+
+  .how::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(201,169,110,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(201,169,110,0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .how-inner { position: relative; z-index: 1; }
+
+  .how .section-eyebrow { color: var(--gold); }
+  .how .section-eyebrow::before { background: var(--gold-dark); }
+  .how .section-title { color: var(--cream); }
+  .how .section-title em { color: var(--gold); }
+
+  .steps-row {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 2px; margin-top: 4rem;
+    position: relative;
+  }
+
+  .steps-row::before {
+    content: '';
+    position: absolute; top: 28px; left: 5%; right: 5%;
+    height: 0.5px; background: rgba(201,169,110,0.25);
+    z-index: 0;
+  }
+
+  .step-item {
+    padding: 2rem 1.5rem;
+    position: relative; z-index: 1; text-align: center;
+  }
+
+  .step-circle {
+    width: 56px; height: 56px; border-radius: 50%;
+    border: 0.5px solid var(--gold-dark);
+    background: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-family: var(--serif); font-size: 1.3rem; font-weight: 300;
+    color: var(--gold);
+  }
+  .step-name {
+    font-family: var(--serif); font-size: 1.1rem; font-weight: 300;
+    color: var(--cream); margin-bottom: 0.5rem;
+  }
+  .step-desc { font-size: 0.8rem; color: rgba(250,247,242,0.5); line-height: 1.65; }
+
+  /* TESTIMONIALS / ITINERARY PREVIEW */
+  .preview {
+    padding: 8rem 7vw;
+    background: var(--cream-mid);
+  }
+
+  .preview-inner {
+    display: grid; grid-template-columns: 1fr 1.4fr; gap: 6rem; align-items: center;
+  }
+
+  .preview-left {}
+
+  .preview-left .section-eyebrow { margin-bottom: 1.5rem; }
+  .preview-left .section-title { margin-bottom: 1.5rem; font-size: clamp(2rem, 3vw, 2.8rem); }
+  .preview-desc {
+    font-size: 0.9rem; color: var(--text-muted); line-height: 1.8;
+    margin-bottom: 2.5rem; font-weight: 300;
+  }
+
+  .preview-itinerary {
+    background: var(--white);
+    border-radius: 4px;
+    border: 0.5px solid var(--cream-dark);
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(26,22,18,0.08);
+  }
+
+  .itinerary-header {
+    background: var(--ink); padding: 1.5rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .itinerary-header-title {
+    font-family: var(--serif); font-size: 1.1rem; font-weight: 300; color: var(--cream);
+  }
+  .itinerary-header-sub { font-size: 0.72rem; color: var(--gold); margin-top: 2px; }
+  .itinerary-header-badge {
+    font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+    background: rgba(201,169,110,0.15); color: var(--gold);
+    padding: 4px 12px; border-radius: 2px; border: 0.5px solid var(--gold-dark);
+  }
+
+  .day-block { padding: 1.5rem 2rem; border-bottom: 0.5px solid var(--cream-dark); }
+  .day-label {
+    font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold-dark); margin-bottom: 1rem;
+  }
+
+  .activity-row {
+    display: flex; gap: 1rem; align-items: flex-start;
+    padding: 0.7rem 0;
+    border-bottom: 0.5px solid var(--cream-mid);
+  }
+  .activity-row:last-child { border-bottom: none; }
+
+  .activity-time {
+    font-size: 0.72rem; color: var(--text-muted); min-width: 44px; padding-top: 2px;
+  }
+  .activity-dot-col {
+    display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 12px;
+  }
+  .a-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+  }
+  .a-dot-gold { background: var(--gold); }
+  .a-dot-blue { background: #6B8FAB; }
+  .a-dot-green { background: #7A9B6B; }
+  .a-dot-red { background: #B5695A; }
+  .a-line { width: 1px; flex: 1; background: var(--cream-dark); min-height: 20px; }
+  .activity-content { flex: 1; }
+  .activity-name { font-size: 0.88rem; color: var(--ink); font-weight: 400; }
+  .activity-location { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+  .activity-tag {
+    display: inline-block; font-size: 0.62rem; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 2px 8px; border-radius: 2px; margin-top: 4px;
+  }
+  .tag-hotel { background: rgba(201,169,110,0.12); color: var(--gold-dark); }
+  .tag-tour { background: rgba(107,143,171,0.12); color: #4A6A85; }
+  .tag-food { background: rgba(122,155,107,0.12); color: #4D7240; }
+  .tag-transport { background: rgba(181,105,90,0.1); color: #894F43; }
+
+  /* HOTEL ACTIVITIES */
+  .hotel-section {
+    padding: 7rem 7vw;
+    background: var(--cream);
+  }
+
+  .hotel-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 4rem;
+  }
+
+  .hotel-card {
+    border-radius: 4px;
+    border: 0.5px solid var(--cream-dark);
+    overflow: hidden;
+    background: var(--white);
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+  }
+  .hotel-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(26,22,18,0.1);
+  }
+
+  .hotel-img {
+    height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem;
+    position: relative; overflow: hidden;
+  }
+  .hotel-img-a { background: linear-gradient(135deg, #2E3A2E, #4A6040); }
+  .hotel-img-b { background: linear-gradient(135deg, #2A3548, #3E5070); }
+  .hotel-img-c { background: linear-gradient(135deg, #3A2E28, #5A4035); }
+
+  .hotel-img-overlay {
+    position: absolute; inset: 0;
+    background: rgba(26,22,18,0.2);
+  }
+
+  .hotel-img-icon {
+    position: relative; z-index: 1;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(201,169,110,0.15); border: 1px solid rgba(201,169,110,0.4);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hotel-img-icon svg {
+    width: 22px; height: 22px; stroke: var(--gold); fill: none;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  .hotel-body { padding: 1.4rem 1.5rem; }
+  .hotel-category {
+    font-size: 0.65rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold-dark); margin-bottom: 0.5rem;
+  }
+  .hotel-name {
+    font-family: var(--serif); font-size: 1.15rem; font-weight: 400;
+    color: var(--ink); margin-bottom: 0.4rem;
+  }
+  .hotel-desc { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+  .hotel-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem; border-top: 0.5px solid var(--cream-mid);
+  }
+  .hotel-duration { font-size: 0.75rem; color: var(--text-muted); }
+  .hotel-add {
+    font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink); background: none; border: 0.5px solid var(--cream-dark);
+    padding: 5px 14px; border-radius: 2px; cursor: pointer; transition: all 0.2s;
+  }
+  .hotel-add:hover { background: var(--ink); color: var(--cream); }
+
+  /* CTA SECTION */
+  .cta-section {
+    padding: 8rem 7vw;
+    background: var(--ink);
+    text-align: center;
+    position: relative; overflow: hidden;
+  }
+
+  .cta-section::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%; transform: translateX(-50%);
+    width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,169,110,0.08) 0%, transparent 70%);
+  }
+
+  .cta-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+
+  .cta-section .section-eyebrow {
+    justify-content: center; color: var(--gold); margin-bottom: 2rem;
+    font-size: 0.72rem;
+  }
+  .cta-section .section-eyebrow::before { display: none; }
+
+  .cta-title {
+    font-family: var(--serif); font-size: clamp(2.2rem, 4vw, 3.5rem);
+    font-weight: 300; line-height: 1.15; color: var(--cream); margin-bottom: 1.5rem;
+  }
+  .cta-title em { font-style: italic; color: var(--gold); }
+
+  .cta-sub {
+    font-size: 0.95rem; color: rgba(250,247,242,0.55);
+    line-height: 1.75; margin-bottom: 3rem; font-weight: 300;
+  }
+
+  .cta-btn {
+    font-family: var(--sans); font-size: 0.82rem; letter-spacing: 0.12em;
+    text-transform: uppercase; cursor: pointer;
+    background: var(--gold); color: var(--ink);
+    border: none; padding: 16px 40px; border-radius: 2px;
+    transition: all 0.25s;
+  }
+  .cta-btn:hover { background: var(--gold-light); }
+
+  /* FOOTER */
+  footer {
+    background: var(--ink-soft);
+    padding: 4rem 7vw 2.5rem;
+    border-top: 0.5px solid rgba(201,169,110,0.12);
+  }
+
+  .footer-top {
+    display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr; gap: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  .footer-brand-name {
+    font-family: var(--serif); font-size: 1.5rem; font-weight: 300;
+    color: var(--cream); margin-bottom: 0.8rem; letter-spacing: 0.04em;
+  }
+  .footer-brand-name span { color: var(--gold); font-style: italic; }
+
+  .footer-tagline {
+    font-size: 0.82rem; color: rgba(250,247,242,0.45); line-height: 1.7; max-width: 280px;
+  }
+
+  .footer-col-title {
+    font-size: 0.65rem; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--gold-dark); margin-bottom: 1.2rem;
+  }
+  .footer-links { list-style: none; display: flex; flex-direction: column; gap: 0.65rem; }
+  .footer-links a {
+    font-size: 0.82rem; color: rgba(250,247,242,0.45);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--gold); }
+
+  .footer-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 2rem; border-top: 0.5px solid rgba(255,255,255,0.06);
+  }
+  .footer-copy { font-size: 0.75rem; color: rgba(250,247,242,0.28); }
+  .footer-legal { display: flex; gap: 1.5rem; }
+  .footer-legal a {
+    font-size: 0.72rem; color: rgba(250,247,242,0.28);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .footer-legal a:hover { color: var(--gold-dark); }
+
+  /* ANIMATIONS */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-up {
+    opacity: 0;
+    animation: fade-up 0.8s ease forwards;
+  }
+  .delay-1 { animation-delay: 0.15s; }
+  .delay-2 { animation-delay: 0.3s; }
+  .delay-3 { animation-delay: 0.45s; }
+  .delay-4 { animation-delay: 0.6s; }
+  .delay-5 { animation-delay: 0.75s; }
+
+  /* SCROLL REVEAL */
+  .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.7s, transform 0.7s; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  /* EMAIL MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(26,22,18,0.72);
+    backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .modal-overlay.open {
+    opacity: 1; pointer-events: all;
+  }
+  .modal-box {
+    background: var(--cream);
+    border: 0.5px solid var(--cream-dark);
+    border-radius: 4px;
+    width: 100%; max-width: 480px;
+    padding: 3rem;
+    position: relative;
+    transform: translateY(24px);
+    transition: transform 0.35s ease;
+    box-shadow: 0 32px 80px rgba(26,22,18,0.22);
+  }
+  .modal-overlay.open .modal-box {
+    transform: translateY(0);
+  }
+  .modal-close {
+    position: absolute; top: 1.2rem; right: 1.4rem;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-muted); font-size: 1.2rem; line-height: 1;
+    padding: 4px; transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--ink); }
+  .modal-eyebrow {
+    font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--gold-dark); display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1.2rem;
+  }
+  .modal-eyebrow::before {
+    content: ''; width: 24px; height: 0.5px; background: var(--gold); display: block;
+  }
+  .modal-title {
+    font-family: var(--serif); font-size: 2rem; font-weight: 300;
+    color: var(--ink); line-height: 1.15; margin-bottom: 0.6rem;
+  }
+  .modal-title em { font-style: italic; color: var(--gold-dark); }
+  .modal-sub {
+    font-size: 0.85rem; color: var(--text-muted); line-height: 1.7;
+    margin-bottom: 2rem; font-weight: 300;
+  }
+  .modal-input-row {
+    display: flex; gap: 0.6rem; margin-bottom: 0.8rem;
+  }
+  .modal-input {
+    flex: 1;
+    font-family: var(--sans); font-size: 0.88rem;
+    background: var(--white); border: 0.5px solid var(--cream-dark);
+    border-radius: 2px; padding: 12px 16px; color: var(--ink);
+    outline: none; transition: border-color 0.2s;
+  }
+  .modal-input:focus { border-color: var(--gold); }
+  .modal-input::placeholder { color: var(--text-muted); }
+  .modal-submit {
+    font-family: var(--sans); font-size: 0.78rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer;
+    background: var(--ink); color: var(--cream);
+    border: none; padding: 12px 22px; border-radius: 2px;
+    transition: background 0.2s; white-space: nowrap;
+  }
+  .modal-submit:hover { background: var(--gold-dark); }
+  .modal-divider {
+    display: flex; align-items: center; gap: 1rem;
+    margin: 1.2rem 0; color: var(--text-muted); font-size: 0.75rem;
+  }
+  .modal-divider::before, .modal-divider::after {
+    content: ''; flex: 1; height: 0.5px; background: var(--cream-dark);
+  }
+  .modal-guest-btn {
+    width: 100%;
+    font-family: var(--sans); font-size: 0.78rem; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer;
+    background: none; color: var(--text-mid);
+    border: 0.5px solid var(--cream-dark); padding: 12px;
+    border-radius: 2px; transition: all 0.2s;
+  }
+  .modal-guest-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .modal-note {
+    font-size: 0.72rem; color: var(--text-muted); margin-top: 1.2rem;
+    line-height: 1.6; text-align: center;
+  }
+  .modal-success {
+    text-align: center; padding: 1rem 0;
+    display: none;
+  }
+  .modal-success-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(201,169,110,0.12); border: 0.5px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 1.2rem;
+  }
+  .modal-success-icon svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .modal-success-title {
+    font-family: var(--serif); font-size: 1.6rem; font-weight: 300;
+    color: var(--ink); margin-bottom: 0.5rem;
+  }
+  .modal-success-sub { font-size: 0.85rem; color: var(--text-muted); line-height: 1.7; }
+
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { display: none; }
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+    .steps-row { grid-template-columns: repeat(2, 1fr); }
+    .steps-row::before { display: none; }
+    .preview-inner { grid-template-columns: 1fr; }
+    .hotel-grid { grid-template-columns: repeat(2, 1fr); }
+    .footer-top { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .features-grid { grid-template-columns: 1fr; }
+    .hotel-grid { grid-template-columns: 1fr; }
+    .footer-top { grid-template-columns: 1fr; }
+    .hero-stat-strip { gap: 1.5rem; }
+    .hero-actions { flex-direction: column; align-items: flex-start; }
+    .steps-row { grid-template-columns: 1fr; }
+  }
+
+  /* ===== BUILDER APP ===== */
+  #builderApp { display: none; }
+  #builderApp.bldr-open { display: flex !important; }
+
+  .bldr-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 64px; border-bottom: 0.5px solid var(--cream-dark);
+    background: var(--cream); flex-shrink: 0; gap: 1.5rem;
+  }
+  .bldr-trip-title-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .bldr-trip-title {
+    font-family: var(--serif); font-size: 1.2rem; font-weight: 300; text-align: center;
+    border: none; background: none; color: var(--ink); outline: none; width: 100%;
+    max-width: 500px; cursor: text; border-bottom: 1px dashed transparent; transition: border-color .2s;
+  }
+  .bldr-trip-title:focus { border-bottom-color: var(--gold); }
+  .bldr-title-hint { font-size: 0.62rem; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-top: 1px; }
+  .bldr-nav-actions { display: flex; gap: .8rem; align-items: center; }
+  .bldr-btn-sm {
+    font-family: var(--sans); font-size: 0.72rem; letter-spacing: .1em; text-transform: uppercase;
+    padding: 8px 16px; border-radius: 2px; cursor: pointer; border: 0.5px solid var(--cream-dark);
+    background: none; color: var(--text-mid); transition: all .2s;
+  }
+  .bldr-btn-sm:hover { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .bldr-btn-danger { border-color: transparent; color: var(--text-muted); }
+  .bldr-btn-danger:hover { background: #B5695A !important; border-color: #B5695A !important; }
+
+  .bldr-body { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .bldr-sidebar {
+    width: 220px; flex-shrink: 0; border-right: 0.5px solid var(--cream-dark);
+    background: var(--cream-mid); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .bldr-sidebar-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 1.2rem .8rem; border-bottom: 0.5px solid var(--cream-dark);
+  }
+  .bldr-section-label {
+    font-size: 0.65rem; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--gold-dark); font-weight: 500;
+  }
+  .bldr-add-day {
+    font-size: 0.7rem; letter-spacing: .08em; text-transform: uppercase;
+    padding: 5px 12px; border-radius: 2px; cursor: pointer;
+    border: 0.5px solid var(--cream-dark); background: none; color: var(--text-mid);
+    transition: all .2s;
+  }
+  .bldr-add-day:hover { background: var(--ink); color: var(--cream); }
+  .bldr-day-list { flex: 1; overflow-y: auto; padding: .6rem 0; }
+  .bldr-day-item {
+    display: flex; align-items: center; gap: .6rem;
+    padding: .7rem 1.2rem; cursor: pointer; transition: background .15s;
+    border-left: 2px solid transparent;
+  }
+  .bldr-day-item:hover { background: rgba(201,169,110,.06); }
+  .bldr-day-item.active { background: rgba(201,169,110,.1); border-left-color: var(--gold); }
+  .bldr-day-num {
+    font-family: var(--serif); font-size: 0.85rem; color: var(--gold); font-style: italic; min-width: 24px;
+  }
+  .bldr-day-info { flex: 1; min-width: 0; }
+  .bldr-day-name-sm { font-size: 0.8rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bldr-day-count { font-size: 0.68rem; color: var(--text-muted); margin-top: 1px; }
+  .bldr-day-del { font-size: 0.75rem; color: var(--text-muted); cursor: pointer; opacity: 0; transition: opacity .15s; padding: 2px 4px; }
+  .bldr-day-item:hover .bldr-day-del { opacity: 1; }
+  .bldr-day-del:hover { color: #B5695A; }
+
+  /* Main Editor */
+  .bldr-main {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--cream);
+  }
+  .bldr-main-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 1.5rem 2rem 1.2rem; border-bottom: 0.5px solid var(--cream-dark);
+  }
+  .bldr-day-label { font-size: 0.65rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gold-dark); margin-bottom: .3rem; }
+  .bldr-day-name {
+    font-family: var(--serif); font-size: 1.4rem; font-weight: 300; border: none;
+    background: none; color: var(--ink); outline: none; cursor: text;
+    border-bottom: 1px dashed transparent; transition: border-color .2s;
+  }
+  .bldr-day-name:focus { border-bottom-color: var(--gold); }
+  .bldr-add-activity {
+    font-family: var(--sans); font-size: 0.72rem; letter-spacing: .1em; text-transform: uppercase;
+    padding: 10px 20px; border-radius: 2px; cursor: pointer;
+    background: var(--ink); color: var(--cream); border: none; transition: background .2s; white-space: nowrap;
+  }
+  .bldr-add-activity:hover { background: var(--gold-dark); }
+
+  .bldr-timeline { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; display: flex; flex-direction: column; gap: .8rem; }
+  .bldr-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; text-align: center; display: none; }
+  .bldr-empty-icon { font-size: 2rem; color: var(--gold); margin-bottom: 1rem; }
+  .bldr-empty-title { font-family: var(--serif); font-size: 1.3rem; color: var(--ink); margin-bottom: .4rem; }
+  .bldr-empty-sub { font-size: .82rem; color: var(--text-muted); line-height: 1.7; max-width: 280px; }
+
+  /* Activity Card in timeline */
+  .bldr-act-card {
+    display: flex; gap: 1rem; align-items: flex-start;
+    background: var(--white); border: 0.5px solid var(--cream-dark);
+    border-radius: 3px; padding: 1rem 1.2rem;
+    transition: box-shadow .2s, transform .15s; cursor: grab; position: relative;
+  }
+  .bldr-act-card:hover { box-shadow: 0 4px 20px rgba(26,22,18,.07); transform: translateY(-1px); }
+  .bldr-act-card:active { cursor: grabbing; }
+  .bldr-act-time-col { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 52px; }
+  .bldr-act-time { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
+  .bldr-act-endtime { font-size: 0.65rem; color: var(--cream-dark); }
+  .bldr-act-connector { width: 1px; flex: 1; min-height: 16px; background: var(--cream-dark); margin: 3px 0; }
+  .bldr-act-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px;
+  }
+  .bldr-act-dot-sightseeing { background: #6B8FAB; }
+  .bldr-act-dot-food { background: #7A9B6B; }
+  .bldr-act-dot-hotel { background: var(--gold); }
+  .bldr-act-dot-transport { background: #B5695A; }
+  .bldr-act-dot-wellness { background: #9B7AB5; }
+  .bldr-act-dot-culture { background: #4A6A85; }
+  .bldr-act-dot-other { background: var(--text-muted); }
+  .bldr-act-body { flex: 1; }
+  .bldr-act-name { font-size: .88rem; color: var(--ink); font-weight: 400; }
+  .bldr-act-location { font-size: .73rem; color: var(--text-muted); margin-top: 2px; }
+  .bldr-act-tag {
+    display: inline-block; font-size: 0.6rem; letter-spacing: .08em; text-transform: uppercase;
+    padding: 2px 8px; border-radius: 2px; margin-top: 5px;
+  }
+  .bldr-act-tag-sightseeing { background: rgba(107,143,171,.12); color: #4A6A85; }
+  .bldr-act-tag-food { background: rgba(122,155,107,.12); color: #4D7240; }
+  .bldr-act-tag-hotel { background: rgba(201,169,110,.12); color: var(--gold-dark); }
+  .bldr-act-tag-transport { background: rgba(181,105,90,.1); color: #894F43; }
+  .bldr-act-tag-wellness { background: rgba(155,122,181,.12); color: #6B4A8B; }
+  .bldr-act-tag-culture { background: rgba(74,106,133,.12); color: #2E4F6A; }
+  .bldr-act-tag-other { background: rgba(122,110,96,.08); color: var(--text-mid); }
+  .bldr-act-dur { font-size: .7rem; color: var(--text-muted); margin-top: 2px; }
+  .bldr-act-edit { font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; padding: 4px 10px; border-radius: 2px; cursor: pointer; background: none; border: 0.5px solid var(--cream-dark); color: var(--text-muted); transition: all .2s; flex-shrink: 0; margin-top: 2px; }
+  .bldr-act-edit:hover { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+
+  /* Right Panel */
+  .bldr-panel {
+    width: 320px; flex-shrink: 0; border-left: 0.5px solid var(--cream-dark);
+    background: var(--cream-mid); display: flex; flex-direction: column; overflow: hidden;
+    transition: width .25s, opacity .25s;
+  }
+  .bldr-panel.closed { width: 0; opacity: 0; pointer-events: none; }
+  .bldr-panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 1.2rem .8rem; border-bottom: 0.5px solid var(--cream-dark);
+  }
+  .bldr-panel-close { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; transition: color .2s; }
+  .bldr-panel-close:hover { color: var(--ink); }
+  .bldr-tabs { display: flex; border-bottom: 0.5px solid var(--cream-dark); }
+  .bldr-tab {
+    flex: 1; padding: .8rem; font-size: .72rem; letter-spacing: .1em; text-transform: uppercase;
+    background: none; border: none; cursor: pointer; color: var(--text-muted); transition: all .2s;
+    border-bottom: 2px solid transparent; margin-bottom: -0.5px;
+  }
+  .bldr-tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+  .bldr-tab-content { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .8rem; }
+  .bldr-search {
+    font-family: var(--sans); font-size: .82rem; padding: 9px 12px; border-radius: 2px;
+    border: 0.5px solid var(--cream-dark); background: var(--white); outline: none;
+    color: var(--ink); width: 100%; transition: border-color .2s;
+  }
+  .bldr-search:focus { border-color: var(--gold); }
+  .bldr-filter-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .bldr-chip {
+    font-size: .62rem; letter-spacing: .08em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 2px; cursor: pointer;
+    border: 0.5px solid var(--cream-dark); background: none; color: var(--text-muted);
+    transition: all .15s;
+  }
+  .bldr-chip.active { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .bldr-act-list { display: flex; flex-direction: column; gap: .5rem; }
+  .bldr-act-option {
+    background: var(--white); border: 0.5px solid var(--cream-dark); border-radius: 3px;
+    padding: .9rem 1rem; cursor: pointer; transition: all .2s;
+  }
+  .bldr-act-option:hover { border-color: var(--gold); box-shadow: 0 2px 12px rgba(201,169,110,.1); }
+  .bldr-act-option-name { font-size: .85rem; color: var(--ink); font-weight: 400; margin-bottom: 2px; }
+  .bldr-act-option-meta { font-size: .7rem; color: var(--text-muted); }
+  .bldr-act-option-add { font-size: .65rem; letter-spacing: .08em; text-transform: uppercase; color: var(--gold-dark); margin-top: 6px; display: block; }
+
+  /* Form elements */
+  .bldr-form-group { display: flex; flex-direction: column; gap: .3rem; }
+  .bldr-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  .bldr-label { font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-dark); }
+  .bldr-input {
+    font-family: var(--sans); font-size: .82rem; padding: 9px 12px; border-radius: 2px;
+    border: 0.5px solid var(--cream-dark); background: var(--white); outline: none;
+    color: var(--ink); width: 100%; transition: border-color .2s;
+  }
+  .bldr-input:focus { border-color: var(--gold); }
+
+  /* Edit Modal */
+  .bldr-edit-modal {
+    position: absolute; inset: 0; background: rgba(26,22,18,.5); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; z-index: 10;
+    opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .bldr-edit-modal.open { opacity: 1; pointer-events: all; }
+  .bldr-edit-box {
+    background: var(--cream); border-radius: 4px; border: 0.5px solid var(--cream-dark);
+    padding: 2rem; width: 420px; box-shadow: 0 24px 60px rgba(26,22,18,.18);
+    display: flex; flex-direction: column; gap: 1rem;
+    transform: translateY(16px); transition: transform .25s;
+  }
+  .bldr-edit-modal.open .bldr-edit-box { transform: translateY(0); }
+  .bldr-edit-header { display: flex; align-items: center; justify-content: space-between; }
+  .bldr-edit-header button { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 1rem; }
+  .bldr-edit-actions { display: flex; justify-content: space-between; gap: .8rem; padding-top: .4rem; }
+  .bldr-btn-danger-sm {
+    font-family: var(--sans); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase;
+    padding: 9px 18px; border-radius: 2px; cursor: pointer;
+    background: none; border: 0.5px solid rgba(181,105,90,.3); color: #B5695A;
+    transition: all .2s;
+  }
+  .bldr-btn-danger-sm:hover { background: #B5695A; color: var(--cream); border-color: #B5695A; }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Voyage<span>ur</span></a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it Works</a></li>
+    <li><a href="#activities">Activities</a></li>
+    <li><a href="#preview">Preview</a></li>
+  </ul>
+  <div class="nav-cta">
+    <button class="btn-primary" onclick="openModal()">Start Planning Free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow animate-up">Concierge-Grade Itinerary Builder</div>
+    <h1 class="hero-title animate-up delay-1">
+      Every journey,<br><em>perfectly</em><br>composed.
+    </h1>
+    <p class="hero-subtitle animate-up delay-2">
+      Plan personalised sightseeing itineraries woven seamlessly with hotel activities, local transport, and curated experiences — all in one elegant tool.
+    </p>
+    <div class="hero-actions animate-up delay-3">
+      <a href="#" class="btn-hero btn-hero-fill" onclick="event.preventDefault(); openModal()">Build Your Itinerary</a>
+      <a href="#how" class="btn-hero btn-hero-outline">See How It Works</a>
+    </div>
+    <div class="hero-stat-strip animate-up delay-4">
+      <div class="stat-item">
+        <span class="stat-num">4,200+</span>
+        <span class="stat-label">Curated Activities</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">180</span>
+        <span class="stat-label">Cities Covered</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">12k+</span>
+        <span class="stat-label">Trips Planned</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-map-bg"></div>
+    <div class="map-grid"></div>
+
+    <!-- Floating Pin Markers -->
+    <div class="map-pin pin-a">
+      <div class="pin-circle"></div>
+      <div class="pin-line"></div>
+    </div>
+    <div class="map-pin pin-b">
+      <div class="pin-circle"></div>
+      <div class="pin-line"></div>
+    </div>
+    <div class="map-pin pin-c">
+      <div class="pin-circle"></div>
+      <div class="pin-line"></div>
+    </div>
+
+    <!-- Floating Cards -->
+    <div class="hero-card-float card-itinerary">
+      <div class="card-label">Day 2 — Rome</div>
+      <div class="card-title">Morning in Trastevere</div>
+      <div class="card-steps">
+        <div class="step-row">
+          <div class="step-dot"></div>
+          <span class="step-time">08:30</span>
+          <span>Hotel breakfast & spa</span>
+        </div>
+        <div class="step-row">
+          <div class="step-dot"></div>
+          <span class="step-time">10:00</span>
+          <span>Colosseum private tour</span>
+        </div>
+        <div class="step-row">
+          <div class="step-dot"></div>
+          <span class="step-time">13:00</span>
+          <span>Lunch at Campo de' Fiori</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-card-float card-weather">
+      <div class="card-label">Current Weather</div>
+      <div class="weather-temp">24°C</div>
+      <div class="weather-cond">Partly Cloudy · Rome</div>
+    </div>
+
+    <div class="hero-card-float card-transport">
+      <div class="card-label">Upcoming Transport</div>
+      <div class="card-transport-row">
+        <div class="transport-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="transport-info">
+          <div class="transport-label">Taxi · 14:30</div>
+          <div class="transport-detail">Hotel → Vatican Museums</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-header reveal">
+    <div class="section-eyebrow">What We Offer</div>
+    <h2 class="section-title">Ten modules.<br><em>One seamless</em> experience.</h2>
+  </div>
+
+  <div class="features-grid">
+    <!-- Row 1 -->
+    <div class="feature-cell reveal">
+      <div class="feature-num">01</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+      </div>
+      <div class="feature-name">Itinerary Builder</div>
+      <div class="feature-desc">Drag-and-drop day planner with smart scheduling, time conflict detection, and duration estimates for every activity.</div>
+    </div>
+
+    <div class="feature-cell reveal">
+      <div class="feature-num">02</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <div class="feature-name">Activity Search</div>
+      <div class="feature-desc">Browse thousands of curated experiences filtered by category, duration, price, and proximity to your hotel.</div>
+    </div>
+
+    <div class="feature-cell reveal">
+      <div class="feature-num">03</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <div class="feature-name">Map View</div>
+      <div class="feature-desc">Interactive map showing your day's activities, routes, and distances — all pinned geographically in sequence.</div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="feature-cell reveal">
+      <div class="feature-num">04</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <div class="feature-name">Hotel Activities</div>
+      <div class="feature-desc">Seamlessly integrate your hotel's spa, dining, gym, and concierge-curated experiences directly into your day.</div>
+    </div>
+
+    <div class="feature-cell reveal">
+      <div class="feature-num">05</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      </div>
+      <div class="feature-name">Transport Add</div>
+      <div class="feature-desc">Book taxis, car rentals, trains, or private transfers and inject them directly between activities in your schedule.</div>
+    </div>
+
+    <div class="feature-cell reveal">
+      <div class="feature-num">06</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="feature-name">Time Planner</div>
+      <div class="feature-desc">Smart timeline view with travel time buffers, open hours validation, and automatic conflict resolution.</div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="feature-cell reveal">
+      <div class="feature-num">07</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div class="feature-name">PDF Export</div>
+      <div class="feature-desc">Generate beautifully formatted PDF itineraries with maps, timelines, and booking references — print-ready.</div>
+    </div>
+
+    <div class="feature-cell reveal">
+      <div class="feature-num">08</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </div>
+      <div class="feature-name">Share Link</div>
+      <div class="feature-desc">Collaborate with travel companions via shareable links. Guests can view, comment, or co-edit the itinerary.</div>
+    </div>
+
+    <div class="feature-cell reveal">
+      <div class="feature-num">09</div>
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+      </div>
+      <div class="feature-name">Session History</div>
+      <div class="feature-desc">Review all itineraries built in your current session, duplicate a favourite as a template, and get them sent to your email before you close the tab.</div>
+    </div>
+  </div>
+
+  <!-- Admin row (spans full) -->
+  <div style="border-left: 0.5px solid var(--cream-dark);">
+    <div class="feature-cell reveal" style="border-right: 0.5px solid var(--cream-dark); border-bottom: 0.5px solid var(--cream-dark); max-width: 100%;">
+      <div class="feature-num">10</div>
+      <div style="display: flex; gap: 3rem; align-items: flex-start;">
+        <div>
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <div class="feature-name">Admin Panel</div>
+          <div class="feature-desc" style="max-width: 380px;">Hotel concierge dashboard to manage guest itineraries, approve activity bookings, add custom hotel offerings, and review analytics — all in a purpose-built admin interface.</div>
+        </div>
+        <div style="flex: 1; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; justify-content: flex-end;">
+          <span style="font-size: 0.75rem; color: var(--text-muted); background: var(--cream-mid); padding: 6px 14px; border-radius: 2px; border: 0.5px solid var(--cream-dark);">Guest Management</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted); background: var(--cream-mid); padding: 6px 14px; border-radius: 2px; border: 0.5px solid var(--cream-dark);">Booking Approvals</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted); background: var(--cream-mid); padding: 6px 14px; border-radius: 2px; border: 0.5px solid var(--cream-dark);">Analytics Dashboard</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted); background: var(--cream-mid); padding: 6px 14px; border-radius: 2px; border: 0.5px solid var(--cream-dark);">Custom Activities</span>
+          <span style="font-size: 0.75rem; color: var(--text-muted); background: var(--cream-mid); padding: 6px 14px; border-radius: 2px; border: 0.5px solid var(--cream-dark);">Role Permissions</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">The Process</div>
+      <h2 class="section-title">Four steps to your<br><em>perfect</em> day.</h2>
+    </div>
+    <div class="steps-row">
+      <div class="step-item reveal">
+        <div class="step-circle">I</div>
+        <div class="step-name">Choose Your Hotel</div>
+        <div class="step-desc">Link your accommodation to unlock curated hotel activities, dining, and concierge services pre-loaded into your builder.</div>
+      </div>
+      <div class="step-item reveal">
+        <div class="step-circle">II</div>
+        <div class="step-name">Discover Activities</div>
+        <div class="step-desc">Search thousands of experiences, tours, restaurants, and attractions filtered by distance, duration, and your interests.</div>
+      </div>
+      <div class="step-item reveal">
+        <div class="step-circle">III</div>
+        <div class="step-name">Build Your Day</div>
+        <div class="step-desc">Drag activities into your timeline, add transport between each stop, and let the planner auto-schedule your perfect day.</div>
+      </div>
+      <div class="step-item reveal">
+        <div class="step-circle">IV</div>
+        <div class="step-name">Export &amp; Share</div>
+        <div class="step-desc">Enter your email to receive a beautifully formatted PDF, share with travel companions, or continue as a guest for a one-time session.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ITINERARY PREVIEW -->
+<section class="preview" id="preview">
+  <div class="preview-inner">
+    <div class="preview-left reveal">
+      <div class="section-eyebrow">Live Preview</div>
+      <h2 class="section-title">Your itinerary,<br><em>beautifully</em> structured.</h2>
+      <p class="preview-desc">
+        Every activity, meal, and transfer displayed in a clean timeline — colour-coded by type, with venue details and smart time buffers built in automatically.
+      </p>
+      <button class="btn-hero btn-hero-fill" style="font-family: var(--sans);" onclick="openModal()">Start Building Free</button>
+    </div>
+
+    <div class="preview-itinerary reveal">
+      <div class="itinerary-header">
+        <div>
+          <div class="itinerary-header-title">Rome — 5 Day Itinerary</div>
+          <div class="itinerary-header-sub">Hotel Palazzo · 14–18 September</div>
+        </div>
+        <div class="itinerary-header-badge">Day 2 of 5</div>
+      </div>
+
+      <div class="day-block">
+        <div class="day-label">Tuesday · 15 September</div>
+
+        <div class="activity-row">
+          <div class="activity-time">08:00</div>
+          <div class="activity-dot-col">
+            <div class="a-dot a-dot-gold"></div>
+            <div class="a-line"></div>
+          </div>
+          <div class="activity-content">
+            <div class="activity-name">Rooftop Breakfast Buffet</div>
+            <div class="activity-location">Hotel Palazzo — 7th Floor Terrace</div>
+            <span class="activity-tag tag-hotel">Hotel Activity</span>
+          </div>
+        </div>
+
+        <div class="activity-row">
+          <div class="activity-time">09:30</div>
+          <div class="activity-dot-col">
+            <div class="a-dot a-dot-red"></div>
+            <div class="a-line"></div>
+          </div>
+          <div class="activity-content">
+            <div class="activity-name">Taxi to Colosseum</div>
+            <div class="activity-location">Hotel Palazzo → Colosseum · ~15 min</div>
+            <span class="activity-tag tag-transport">Transport</span>
+          </div>
+        </div>
+
+        <div class="activity-row">
+          <div class="activity-time">10:00</div>
+          <div class="activity-dot-col">
+            <div class="a-dot a-dot-blue"></div>
+            <div class="a-line"></div>
+          </div>
+          <div class="activity-content">
+            <div class="activity-name">Colosseum Private Guided Tour</div>
+            <div class="activity-location">Piazza del Colosseo · 2h 30min</div>
+            <span class="activity-tag tag-tour">Guided Tour</span>
+          </div>
+        </div>
+
+        <div class="activity-row">
+          <div class="activity-time">13:00</div>
+          <div class="activity-dot-col">
+            <div class="a-dot a-dot-green"></div>
+            <div class="a-line"></div>
+          </div>
+          <div class="activity-content">
+            <div class="activity-name">Lunch — Da Enzo al 29</div>
+            <div class="activity-location">Trastevere · Roman trattoria · 1h 30min</div>
+            <span class="activity-tag tag-food">Dining</span>
+          </div>
+        </div>
+
+        <div class="activity-row">
+          <div class="activity-time">15:00</div>
+          <div class="activity-dot-col">
+            <div class="a-dot a-dot-blue"></div>
+          </div>
+          <div class="activity-content">
+            <div class="activity-name">Vatican Museums &amp; Sistine Chapel</div>
+            <div class="activity-location">Viale Vaticano · Skip-the-line tickets · 3h</div>
+            <span class="activity-tag tag-tour">Guided Tour</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding: 1rem 2rem; display: flex; gap: 1rem; align-items: center; background: var(--cream-mid);">
+        <div style="flex: 1; font-size: 0.8rem; color: var(--text-muted);">5 activities · 2 transports · 3.5km total</div>
+        <button class="hotel-add">Export PDF</button>
+        <button class="hotel-add">Share Link</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOTEL ACTIVITIES -->
+<section class="hotel-section" id="activities">
+  <div class="section-header reveal">
+    <div class="section-eyebrow">Hotel Experiences</div>
+    <h2 class="section-title">Your hotel, <em>integrated</em><br>into every day.</h2>
+  </div>
+
+  <div class="hotel-grid">
+    <div class="hotel-card reveal">
+      <div class="hotel-img hotel-img-a">
+        <div class="hotel-img-overlay"></div>
+        <div class="hotel-img-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+      </div>
+      <div class="hotel-body">
+        <div class="hotel-category">Wellness &amp; Spa</div>
+        <div class="hotel-name">Morning Rejuvenation Ritual</div>
+        <div class="hotel-desc">A signature 90-minute treatment combining hot stone massage, aromatherapy, and access to thermal pools.</div>
+      </div>
+      <div class="hotel-footer">
+        <div class="hotel-duration">90 min · From €120</div>
+        <button class="hotel-add">+ Add to Day</button>
+      </div>
+    </div>
+
+    <div class="hotel-card reveal">
+      <div class="hotel-img hotel-img-b">
+        <div class="hotel-img-overlay"></div>
+        <div class="hotel-img-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+        </div>
+      </div>
+      <div class="hotel-body">
+        <div class="hotel-category">Concierge Tour</div>
+        <div class="hotel-name">Hidden Rome Walking Tour</div>
+        <div class="hotel-desc">Our expert concierge leads a private 3-hour walk through secret courtyards, piazzas, and baroque churches tourists miss.</div>
+      </div>
+      <div class="hotel-footer">
+        <div class="hotel-duration">3 hours · Complimentary</div>
+        <button class="hotel-add">+ Add to Day</button>
+      </div>
+    </div>
+
+    <div class="hotel-card reveal">
+      <div class="hotel-img hotel-img-c">
+        <div class="hotel-img-overlay"></div>
+        <div class="hotel-img-icon">
+          <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </div>
+      </div>
+      <div class="hotel-body">
+        <div class="hotel-category">Rooftop Dining</div>
+        <div class="hotel-name">Sunset Aperitivo &amp; Dinner</div>
+        <div class="hotel-desc">Reserve the hotel's rooftop terrace at golden hour for handcrafted Negronis and a seasonal Roman tasting menu.</div>
+      </div>
+      <div class="hotel-footer">
+        <div class="hotel-duration">2.5 hours · From €85/person</div>
+        <button class="hotel-add">+ Add to Day</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <div class="section-eyebrow">Begin Your Journey</div>
+    <h2 class="cta-title">Every great trip starts<br>with a <em>great plan.</em></h2>
+    <p class="cta-sub">Join thousands of travellers crafting personalised itineraries with Voyageur — where hotel luxury meets local adventure.</p>
+    <button class="cta-btn" onclick="openModal()">Build Your First Itinerary</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand-name">Voyage<span>ur</span></div>
+      <div class="footer-tagline">Concierge-grade itinerary planning for travellers who believe the journey is as important as the destination.</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Product</div>
+      <ul class="footer-links">
+        <li><a href="#">Itinerary Builder</a></li>
+        <li><a href="#">Activity Search</a></li>
+        <li><a href="#">Map View</a></li>
+        <li><a href="#">PDF Export</a></li>
+        <li><a href="#">Share Link</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Hotels</div>
+      <ul class="footer-links">
+        <li><a href="#">Partner With Us</a></li>
+        <li><a href="#">Admin Panel</a></li>
+        <li><a href="#">Concierge Tools</a></li>
+        <li><a href="#">Activity Listings</a></li>
+        <li><a href="#">API Access</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-col-title">Company</div>
+      <ul class="footer-links">
+        <li><a href="#">About</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Voyageur. All rights reserved.</div>
+    <div class="footer-legal">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="#">Cookie Settings</a>
+    </div>
+  </div>
+</footer>
+
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="emailModal" onclick="handleOverlayClick(event)">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">&#x2715;</button>
+
+    <div id="modalForm">
+      <div class="modal-eyebrow">No account needed</div>
+      <h2 class="modal-title" id="modalTitle">Where shall we<br>send your <em>itinerary?</em></h2>
+      <p class="modal-sub">Drop your email and we'll send your finished plan as a beautiful PDF — or skip and build as a guest (session only).</p>
+
+      <div class="modal-input-row">
+        <input
+          type="email"
+          id="emailInput"
+          class="modal-input"
+          placeholder="your@email.com"
+          autocomplete="email"
+          onkeydown="if(event.key==='Enter') submitEmail()"
+        />
+        <button class="modal-submit" onclick="submitEmail()">Send to Me</button>
+      </div>
+      <p id="emailError" style="font-size:0.75rem; color:#B5695A; margin-bottom:0.4rem; display:none;">Please enter a valid email address.</p>
+
+      <div class="modal-divider">or</div>
+
+      <button class="modal-guest-btn" onclick="continueAsGuest()">Continue as Guest — no email</button>
+
+      <p class="modal-note">No password, no account. Guest sessions are temporary — your itinerary lives until you close the tab.</p>
+    </div>
+
+    <div class="modal-success" id="modalSuccess">
+      <div class="modal-success-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="modal-success-title">You're all set.</div>
+      <p class="modal-success-sub">We'll email your itinerary to <strong id="confirmedEmail"></strong> once it's ready.<br>Taking you to the builder now…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, (entry.target.dataset.delay || 0) * 1);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach((el, i) => {
+    el.dataset.delay = (i % 3) * 120;
+    observer.observe(el);
+  });
+
+  // Smooth scroll
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      if (a.getAttribute('href') === '#') return;
+      e.preventDefault();
+      const id = a.getAttribute('href').slice(1);
+      if (id) document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // Modal logic
+  function openModal() {
+    const modal = document.getElementById('emailModal');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('emailInput')?.focus(), 350);
+  }
+  function closeModal() {
+    document.getElementById('emailModal').classList.remove('open');
+    document.body.style.overflow = '';
+    document.getElementById('modalForm').style.display = '';
+    document.getElementById('modalSuccess').style.display = 'none';
+    document.getElementById('emailInput').value = '';
+    document.getElementById('emailError').style.display = 'none';
+  }
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('emailModal')) closeModal();
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeEditModal(); }
+  });
+
+  // ===== VOYAGEUR BUILDER =====
+
+  const ACTIVITY_LIBRARY = [
+    { id:'a1', name:'Hotel Breakfast & Spa', location:'Hotel', category:'hotel', duration:90, time:'08:00' },
+    { id:'a2', name:'Colosseum Private Tour', location:'Via Sacra, Rome', category:'culture', duration:120, time:'10:00' },
+    { id:'a3', name:'Lunch at Campo de\' Fiori', location:'Campo de\' Fiori', category:'food', duration:75, time:'13:00' },
+    { id:'a4', name:'Vatican Museums & Sistine Chapel', location:'Vatican City', category:'sightseeing', duration:180, time:'09:00' },
+    { id:'a5', name:'Sunset Aperitivo on Rooftop', location:'Hotel Terrace', category:'hotel', duration:90, time:'18:30' },
+    { id:'a6', name:'Trastevere Walking Tour', location:'Trastevere, Rome', category:'sightseeing', duration:120, time:'10:30' },
+    { id:'a7', name:'Morning Rejuvenation Ritual', location:'Hotel Spa', category:'wellness', duration:90, time:'08:30' },
+    { id:'a8', name:'Hidden Rome Walking Tour', location:'Old City Centre', category:'culture', duration:180, time:'10:00' },
+    { id:'a9', name:'Sunset Dinner at Rooftop Restaurant', location:'Hotel Restaurant', category:'food', duration:150, time:'19:30' },
+    { id:'a10', name:'Borghese Gallery Visit', location:'Piazzale Scipione Borghese', category:'culture', duration:120, time:'11:00' },
+    { id:'a11', name:'Taxi to Airport', location:'Departure Transfer', category:'transport', duration:45, time:'07:00' },
+    { id:'a12', name:'Piazza Navona Stroll', location:'Piazza Navona', category:'sightseeing', duration:60, time:'14:00' },
+    { id:'a13', name:'Gelato & Coffee Break', location:'Local Café', category:'food', duration:30, time:'15:30' },
+    { id:'a14', name:'Pantheon Visit', location:'Piazza della Rotonda', category:'culture', duration:60, time:'16:00' },
+    { id:'a15', name:'Private Car to Hotel', location:'Airport → Hotel', category:'transport', duration:50, time:'14:30' },
+    { id:'a16', name:'Yoga & Meditation Session', location:'Hotel Wellness Centre', category:'wellness', duration:60, time:'07:00' },
+    { id:'a17', name:'Roman Forum Guided Tour', location:'Via Sacra', category:'culture', duration:90, time:'09:30' },
+    { id:'a18', name:'Trastevere Dinner', location:'Ristorante da Enzo', category:'food', duration:120, time:'20:00' },
+  ];
+
+  let state = {
+    days: [
+      { id: 'd1', name: 'Arrival & First Evening', activities: [] },
+    ],
+    activeDayId: 'd1',
+    panelOpen: false,
+    editingActivityId: null,
+    activeCategory: 'all',
+    nextDayNum: 2,
+    nextActId: 100,
+  };
+
+  function openBuilder() {
+    document.getElementById('builderApp').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    renderDayList();
+    renderTimeline();
+    renderActivityLibrary();
+    renderCategoryChips();
+  }
+
+  function exitBuilder(e) {
+    e.preventDefault();
+    if (confirm('Exit the itinerary builder? Your progress is saved in this session.')) {
+      document.getElementById('builderApp').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Days
+  function addDay() {
+    const id = 'd' + Date.now();
+    state.days.push({ id, name: 'Day ' + state.nextDayNum, activities: [] });
+    state.nextDayNum++;
+    state.activeDayId = id;
+    renderDayList();
+    renderTimeline();
+  }
+
+  function selectDay(id) {
+    state.activeDayId = id;
+    renderDayList();
+    renderTimeline();
+  }
+
+  function deleteDay(id, e) {
+    e.stopPropagation();
+    if (state.days.length === 1) { alert('You need at least one day.'); return; }
+    if (!confirm('Remove this day and all its activities?')) return;
+    state.days = state.days.filter(d => d.id !== id);
+    if (state.activeDayId === id) state.activeDayId = state.days[0].id;
+    renderDayList();
+    renderTimeline();
+  }
+
+  function updateDayName(val) {
+    const day = state.days.find(d => d.id === state.activeDayId);
+    if (day) { day.name = val; renderDayList(); }
+  }
+
+  function getActiveDay() { return state.days.find(d => d.id === state.activeDayId); }
+
+  function renderDayList() {
+    const list = document.getElementById('dayList');
+    list.innerHTML = state.days.map((d, i) => `
+      <div class="bldr-day-item ${d.id === state.activeDayId ? 'active' : ''}" onclick="selectDay('${d.id}')">
+        <div class="bldr-day-num">${i + 1}</div>
+        <div class="bldr-day-info">
+          <div class="bldr-day-name-sm">${d.name}</div>
+          <div class="bldr-day-count">${d.activities.length} activit${d.activities.length !== 1 ? 'ies' : 'y'}</div>
+        </div>
+        <span class="bldr-day-del" onclick="deleteDay('${d.id}', event)">✕</span>
+      </div>
+    `).join('');
+
+    const day = getActiveDay();
+    const idx = state.days.indexOf(day);
+    document.getElementById('activeDayLabel').textContent = 'Day ' + (idx + 1);
+    document.getElementById('activeDayName').value = day ? day.name : '';
+  }
+
+  // Timeline
+  function renderTimeline() {
+    const day = getActiveDay();
+    const timeline = document.getElementById('timeline');
+    const empty = document.getElementById('timelineEmpty');
+
+    if (!day || day.activities.length === 0) {
+      timeline.style.display = 'none';
+      empty.style.display = 'flex';
+      return;
+    }
+    timeline.style.display = 'flex';
+    empty.style.display = 'none';
+
+    const sorted = [...day.activities].sort((a, b) => a.time.localeCompare(b.time));
+    timeline.innerHTML = sorted.map((act, i) => {
+      const endTime = calcEndTime(act.time, act.duration);
+      return `
+        <div class="bldr-act-card">
+          <div class="bldr-act-time-col">
+            <div class="bldr-act-time">${act.time}</div>
+            <div class="bldr-act-connector"></div>
+            <div class="bldr-act-time" style="color:var(--cream-dark)">${endTime}</div>
+          </div>
+          <div style="display:flex;align-items:flex-start;padding-top:3px;margin-right:.5rem">
+            <div class="bldr-act-dot bldr-act-dot-${act.category}"></div>
+          </div>
+          <div class="bldr-act-body">
+            <div class="bldr-act-name">${act.name}</div>
+            ${act.location ? `<div class="bldr-act-location">📍 ${act.location}</div>` : ''}
+            <span class="bldr-act-tag bldr-act-tag-${act.category}">${act.category}</span>
+            <div class="bldr-act-dur">${act.duration} min</div>
+          </div>
+          <button class="bldr-act-edit" onclick="openEditModal('${act.id}')">Edit</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function calcEndTime(startTime, durationMins) {
+    const [h, m] = startTime.split(':').map(Number);
+    const total = h * 60 + m + durationMins;
+    const eh = Math.floor(total / 60) % 24;
+    const em = total % 60;
+    return String(eh).padStart(2,'0') + ':' + String(em).padStart(2,'0');
+  }
+
+  // Activity Panel
+  function openActivityPanel() {
+    document.getElementById('activityPanel').classList.remove('closed');
+    state.panelOpen = true;
+  }
+  function closeActivityPanel() {
+    document.getElementById('activityPanel').classList.add('closed');
+    state.panelOpen = false;
+  }
+
+  function switchTab(tab, btn) {
+    document.getElementById('tabBrowse').style.display = tab === 'browse' ? 'flex' : 'none';
+    document.getElementById('tabCustom').style.display = tab === 'custom' ? 'flex' : 'none';
+    document.querySelectorAll('.bldr-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function renderCategoryChips() {
+    const cats = ['all', 'sightseeing', 'food', 'hotel', 'transport', 'wellness', 'culture'];
+    document.getElementById('categoryChips').innerHTML = cats.map(c => `
+      <button class="bldr-chip ${c === 'all' ? 'active' : ''}" onclick="filterByCategory('${c}', this)">${c}</button>
+    `).join('');
+  }
+
+  function filterByCategory(cat, btn) {
+    state.activeCategory = cat;
+    document.querySelectorAll('.bldr-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    renderActivityLibrary();
+  }
+
+  function filterActivities(query) {
+    renderActivityLibrary(query);
+  }
+
+  function renderActivityLibrary(query = '') {
+    const q = query.toLowerCase();
+    const filtered = ACTIVITY_LIBRARY.filter(a => {
+      const catOk = state.activeCategory === 'all' || a.category === state.activeCategory;
+      const qOk = !q || a.name.toLowerCase().includes(q) || a.location.toLowerCase().includes(q);
+      return catOk && qOk;
+    });
+    document.getElementById('actList').innerHTML = filtered.length ? filtered.map(a => `
+      <div class="bldr-act-option" onclick="addLibraryActivity('${a.id}')">
+        <div class="bldr-act-option-name">${a.name}</div>
+        <div class="bldr-act-option-meta">📍 ${a.location} · ${a.duration} min</div>
+        <span class="bldr-act-tag bldr-act-tag-${a.category}" style="margin-top:6px;display:inline-block">${a.category}</span>
+        <span class="bldr-act-option-add">+ Add to day →</span>
+      </div>
+    `).join('') : '<div style="font-size:.82rem;color:var(--text-muted);padding:.5rem 0;">No activities found.</div>';
+  }
+
+  function addLibraryActivity(id) {
+    const template = ACTIVITY_LIBRARY.find(a => a.id === id);
+    if (!template) return;
+    const day = getActiveDay();
+    if (!day) return;
+
+    // Auto-schedule: find a free slot after existing activities
+    let time = template.time;
+    const sorted = [...day.activities].sort((a,b) => a.time.localeCompare(b.time));
+    if (sorted.length > 0) {
+      const last = sorted[sorted.length - 1];
+      time = calcEndTime(last.time, last.duration + 15);
+    }
+
+    day.activities.push({
+      id: 'act_' + (state.nextActId++),
+      name: template.name, location: template.location,
+      category: template.category, duration: template.duration, time,
+    });
+    renderTimeline();
+    renderDayList();
+  }
+
+  function addCustomActivity() {
+    const name = document.getElementById('customName').value.trim();
+    if (!name) { alert('Please enter an activity name.'); return; }
+    const day = getActiveDay();
+    if (!day) return;
+    day.activities.push({
+      id: 'act_' + (state.nextActId++),
+      name, location: document.getElementById('customLocation').value,
+      category: document.getElementById('customCategory').value,
+      duration: parseInt(document.getElementById('customDuration').value) || 60,
+      time: document.getElementById('customTime').value || '09:00',
+    });
+    document.getElementById('customName').value = '';
+    document.getElementById('customLocation').value = '';
+    renderTimeline();
+    renderDayList();
+  }
+
+  // Edit Modal
+  let editingActId = null;
+  function openEditModal(actId) {
+    const day = getActiveDay();
+    const act = day.activities.find(a => a.id === actId);
+    if (!act) return;
+    editingActId = actId;
+    document.getElementById('editName').value = act.name;
+    document.getElementById('editTime').value = act.time;
+    document.getElementById('editDuration').value = act.duration;
+    document.getElementById('editLocation').value = act.location || '';
+    document.getElementById('editModal').classList.add('open');
+  }
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('open');
+    editingActId = null;
+  }
+  function saveEdit() {
+    const day = getActiveDay();
+    const act = day.activities.find(a => a.id === editingActId);
+    if (!act) return;
+    act.name = document.getElementById('editName').value || act.name;
+    act.time = document.getElementById('editTime').value || act.time;
+    act.duration = parseInt(document.getElementById('editDuration').value) || act.duration;
+    act.location = document.getElementById('editLocation').value;
+    closeEditModal();
+    renderTimeline();
+  }
+  function deleteActivity() {
+    if (!confirm('Remove this activity?')) return;
+    const day = getActiveDay();
+    day.activities = day.activities.filter(a => a.id !== editingActId);
+    closeEditModal();
+    renderTimeline();
+    renderDayList();
+  }
+
+  // Export
+  function exportTxt() {
+    const title = document.getElementById('tripTitle').value || 'My Itinerary';
+    let out = title + '\n' + '='.repeat(title.length) + '\n\n';
+    state.days.forEach((d, i) => {
+      out += 'Day ' + (i+1) + ': ' + d.name + '\n';
+      out += '-'.repeat(40) + '\n';
+      const sorted = [...d.activities].sort((a,b) => a.time.localeCompare(b.time));
+      if (sorted.length === 0) { out += '  (no activities)\n'; }
+      sorted.forEach(a => {
+        const end = calcEndTime(a.time, a.duration);
+        out += `  ${a.time}–${end}  ${a.name}`;
+        if (a.location) out += ` (${a.location})`;
+        out += '\n';
+      });
+      out += '\n';
+    });
+    const blob = new Blob([out], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = title.replace(/[^a-z0-9]/gi,'_') + '.txt';
+    link.click(); URL.revokeObjectURL(url);
+  }
+
+  // Wire up homepage buttons to open builder
+  function continueAsGuest() {
+    closeModal();
+    openBuilder();
+  }
+  function submitEmail() {
+    const input = document.getElementById('emailInput');
+    const error = document.getElementById('emailError');
+    const val = input.value.trim();
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+    if (!valid) { error.style.display = 'block'; input.focus(); return; }
+    error.style.display = 'none';
+    document.getElementById('confirmedEmail').textContent = val;
+    document.getElementById('modalForm').style.display = 'none';
+    document.getElementById('modalSuccess').style.display = 'block';
+    setTimeout(() => { closeModal(); openBuilder(); }, 2000);
+  }
+
+</script>
+
+<!-- ===== ITINERARY BUILDER APP ===== -->
+<div id="builderApp" style="position:fixed;inset:0;z-index:200;display:none;overflow:hidden;flex-direction:column;background:var(--cream);">
+
+  <div class="bldr-nav">
+    <a href="#" class="nav-logo" onclick="exitBuilder(event)">Voyage<span>ur</span></a>
+    <div class="bldr-trip-title-wrap">
+      <input class="bldr-trip-title" id="tripTitle" value="My Roman Holiday" maxlength="60" />
+      <span class="bldr-title-hint">click to rename</span>
+    </div>
+    <div class="bldr-nav-actions">
+      <button class="bldr-btn-sm" onclick="exportTxt()">⬇ Export Plan</button>
+      <button class="bldr-btn-sm bldr-btn-danger" onclick="exitBuilder(event)">✕ Exit</button>
+    </div>
+  </div>
+
+  <div class="bldr-body">
+
+    <!-- Sidebar: Days -->
+    <div class="bldr-sidebar">
+      <div class="bldr-sidebar-top">
+        <div class="bldr-section-label">Days</div>
+        <button class="bldr-add-day" onclick="addDay()">+ Add Day</button>
+      </div>
+      <div id="dayList" class="bldr-day-list"></div>
+    </div>
+
+    <!-- Main: Timeline -->
+    <div class="bldr-main">
+      <div class="bldr-main-header">
+        <div>
+          <div class="bldr-day-label" id="activeDayLabel">Day 1</div>
+          <input class="bldr-day-name" id="activeDayName" value="" maxlength="60" oninput="updateDayName(this.value)" />
+        </div>
+        <button class="bldr-add-activity" onclick="openActivityPanel()">+ Add Activity</button>
+      </div>
+      <div id="timeline" class="bldr-timeline"></div>
+      <div class="bldr-empty" id="timelineEmpty">
+        <div class="bldr-empty-icon">✦</div>
+        <div class="bldr-empty-title">No activities yet</div>
+        <div class="bldr-empty-sub">Click "Add Activity" to start building this day.</div>
+        <button class="bldr-add-activity" style="margin-top:1.2rem" onclick="openActivityPanel()">+ Add Activity</button>
+      </div>
+    </div>
+
+    <!-- Right Panel: Activity Picker -->
+    <div class="bldr-panel" id="activityPanel">
+      <div class="bldr-panel-header">
+        <div class="bldr-section-label">Add Activity</div>
+        <button class="bldr-panel-close" onclick="closeActivityPanel()">✕</button>
+      </div>
+      <div class="bldr-tabs">
+        <button class="bldr-tab active" id="tabBrowseBtn" onclick="switchTab('browse',this)">Browse</button>
+        <button class="bldr-tab" id="tabCustomBtn" onclick="switchTab('custom',this)">Custom</button>
+      </div>
+
+      <div id="tabBrowse" class="bldr-tab-content">
+        <input class="bldr-search" id="actSearch" placeholder="Search activities…" oninput="filterActivities(this.value)" />
+        <div class="bldr-filter-chips" id="categoryChips"></div>
+        <div id="actList" class="bldr-act-list"></div>
+      </div>
+
+      <div id="tabCustom" class="bldr-tab-content" style="display:none">
+        <div class="bldr-form-group">
+          <label class="bldr-label">Activity Name</label>
+          <input class="bldr-input" id="customName" placeholder="e.g. Sunset boat cruise" />
+        </div>
+        <div class="bldr-form-row">
+          <div class="bldr-form-group">
+            <label class="bldr-label">Start Time</label>
+            <input class="bldr-input" id="customTime" type="time" value="09:00" />
+          </div>
+          <div class="bldr-form-group">
+            <label class="bldr-label">Duration (min)</label>
+            <input class="bldr-input" id="customDuration" type="number" value="60" min="15" step="15" />
+          </div>
+        </div>
+        <div class="bldr-form-group">
+          <label class="bldr-label">Location / Notes</label>
+          <input class="bldr-input" id="customLocation" placeholder="e.g. Piazza Navona" />
+        </div>
+        <div class="bldr-form-group">
+          <label class="bldr-label">Category</label>
+          <select class="bldr-input" id="customCategory">
+            <option value="sightseeing">Sightseeing</option>
+            <option value="food">Food & Dining</option>
+            <option value="hotel">Hotel</option>
+            <option value="transport">Transport</option>
+            <option value="wellness">Wellness</option>
+            <option value="culture">Culture</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <button class="bldr-add-activity" style="width:100%" onclick="addCustomActivity()">Add to Itinerary</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="bldr-edit-modal" id="editModal">
+    <div class="bldr-edit-box">
+      <div class="bldr-edit-header">
+        <span class="bldr-section-label">Edit Activity</span>
+        <button onclick="closeEditModal()">✕</button>
+      </div>
+      <div class="bldr-form-group">
+        <label class="bldr-label">Name</label>
+        <input class="bldr-input" id="editName" />
+      </div>
+      <div class="bldr-form-row">
+        <div class="bldr-form-group">
+          <label class="bldr-label">Start Time</label>
+          <input class="bldr-input" id="editTime" type="time" />
+        </div>
+        <div class="bldr-form-group">
+          <label class="bldr-label">Duration (min)</label>
+          <input class="bldr-input" id="editDuration" type="number" min="15" step="15" />
+        </div>
+      </div>
+      <div class="bldr-form-group">
+        <label class="bldr-label">Location / Notes</label>
+        <input class="bldr-input" id="editLocation" />
+      </div>
+      <div class="bldr-edit-actions">
+        <button class="bldr-btn-danger-sm" onclick="deleteActivity()">Delete</button>
+        <button class="bldr-add-activity" onclick="saveEdit()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
